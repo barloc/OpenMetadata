@@ -15,7 +15,9 @@ package org.openmetadata.catalog.resources.teams;
 
 import static org.openmetadata.catalog.security.SecurityUtil.ADMIN;
 import static org.openmetadata.catalog.security.SecurityUtil.BOT;
-
+import com.codahale.metrics.annotation.ExceptionMetered;
+import com.codahale.metrics.annotation.ResponseMetered;
+import com.codahale.metrics.annotation.Timed;
 import io.dropwizard.jersey.PATCH;
 import io.swagger.annotations.Api;
 import io.swagger.v3.oas.annotations.ExternalDocumentation;
@@ -100,6 +102,9 @@ public class RoleResource extends EntityResource<Role, RoleRepository> {
 
   public static final String FIELDS = "policy,teams,users";
 
+  @Timed
+  @ResponseMetered
+  @ExceptionMetered
   @GET
   @Valid
   @Operation(
@@ -160,6 +165,9 @@ public class RoleResource extends EntityResource<Role, RoleRepository> {
     return addHref(uriInfo, roles);
   }
 
+  @Timed
+  @ResponseMetered
+  @ExceptionMetered
   @GET
   @Path("/{id}/versions")
   @Operation(
@@ -180,6 +188,9 @@ public class RoleResource extends EntityResource<Role, RoleRepository> {
     return dao.listVersions(id);
   }
 
+  @Timed
+  @ResponseMetered
+  @ExceptionMetered
   @GET
   @Valid
   @Path("/{id}")
@@ -213,6 +224,9 @@ public class RoleResource extends EntityResource<Role, RoleRepository> {
     return getInternal(uriInfo, securityContext, id, fieldsParam, include);
   }
 
+  @Timed
+  @ResponseMetered
+  @ExceptionMetered
   @GET
   @Valid
   @Path("/name/{name}")
@@ -246,6 +260,9 @@ public class RoleResource extends EntityResource<Role, RoleRepository> {
     return getByNameInternal(uriInfo, securityContext, name, fieldsParam, include);
   }
 
+  @Timed
+  @ResponseMetered
+  @ExceptionMetered
   @GET
   @Path("/{id}/versions/{version}")
   @Operation(
@@ -274,6 +291,9 @@ public class RoleResource extends EntityResource<Role, RoleRepository> {
     return dao.getVersion(id, version);
   }
 
+  @Timed
+  @ResponseMetered
+  @ExceptionMetered
   @POST
   @Operation(
       summary = "Create a role",
@@ -293,6 +313,9 @@ public class RoleResource extends EntityResource<Role, RoleRepository> {
     return create(uriInfo, securityContext, role, ADMIN | BOT);
   }
 
+  @Timed
+  @ResponseMetered
+  @ExceptionMetered
   @PUT
   @Operation(
       summary = "Update role",
@@ -312,6 +335,9 @@ public class RoleResource extends EntityResource<Role, RoleRepository> {
     return createOrUpdate(uriInfo, securityContext, role, ADMIN | BOT);
   }
 
+  @Timed
+  @ResponseMetered
+  @ExceptionMetered
   @PATCH
   @Path("/{id}")
   @Consumes(MediaType.APPLICATION_JSON_PATCH_JSON)
@@ -334,9 +360,13 @@ public class RoleResource extends EntityResource<Role, RoleRepository> {
                       }))
           JsonPatch patch)
       throws IOException {
+    SecurityUtil.checkAdminOrBotRole(authorizer, securityContext);
     return patchInternal(uriInfo, securityContext, id, patch);
   }
 
+  @Timed
+  @ResponseMetered
+  @ExceptionMetered
   @DELETE
   @Path("/{id}")
   @Operation(
