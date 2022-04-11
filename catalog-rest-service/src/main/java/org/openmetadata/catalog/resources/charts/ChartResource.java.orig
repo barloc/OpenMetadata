@@ -11,15 +11,18 @@
  *  limitations under the License.
  */
 
-package org.openmetadata.catalog.resources.pipelines;
+package org.openmetadata.catalog.resources.charts;
 
+<<<<<<< HEAD
 import static org.openmetadata.catalog.security.SecurityUtil.ADMIN;
 import static org.openmetadata.catalog.security.SecurityUtil.BOT;
 import static org.openmetadata.catalog.security.SecurityUtil.OWNER;
 
+=======
 import com.codahale.metrics.annotation.ExceptionMetered;
 import com.codahale.metrics.annotation.ResponseMetered;
 import com.codahale.metrics.annotation.Timed;
+>>>>>>> 9d1c8c168 (Fix #1607 Operational metrics for OpenMetadata system observability)
 import io.swagger.annotations.Api;
 import io.swagger.v3.oas.annotations.ExternalDocumentation;
 import io.swagger.v3.oas.annotations.Operation;
@@ -53,74 +56,71 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.SecurityContext;
 import javax.ws.rs.core.UriInfo;
 import org.openmetadata.catalog.Entity;
-import org.openmetadata.catalog.api.data.CreatePipeline;
-import org.openmetadata.catalog.entity.data.Pipeline;
-import org.openmetadata.catalog.entity.data.PipelineStatus;
+import org.openmetadata.catalog.api.data.CreateChart;
+import org.openmetadata.catalog.entity.data.Chart;
+import org.openmetadata.catalog.jdbi3.ChartRepository;
 import org.openmetadata.catalog.jdbi3.CollectionDAO;
 import org.openmetadata.catalog.jdbi3.ListFilter;
-import org.openmetadata.catalog.jdbi3.PipelineRepository;
 import org.openmetadata.catalog.resources.Collection;
 import org.openmetadata.catalog.resources.EntityResource;
 import org.openmetadata.catalog.security.Authorizer;
-import org.openmetadata.catalog.security.SecurityUtil;
 import org.openmetadata.catalog.type.EntityHistory;
 import org.openmetadata.catalog.type.Include;
 import org.openmetadata.catalog.util.RestUtil;
 import org.openmetadata.catalog.util.ResultList;
 
-@Path("/v1/pipelines")
-@Api(value = "Pipelines collection", tags = "Pipelines collection")
+@Path("/v1/charts")
+@Api(value = "Chart data asset collection", tags = "Chart data asset collection")
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
-@Collection(name = "pipelines")
-public class PipelineResource extends EntityResource<Pipeline, PipelineRepository> {
-  public static final String COLLECTION_PATH = "v1/pipelines/";
+@Collection(name = "charts")
+public class ChartResource extends EntityResource<Chart, ChartRepository> {
+  public static final String COLLECTION_PATH = "v1/charts/";
 
   @Override
-  public Pipeline addHref(UriInfo uriInfo, Pipeline pipeline) {
-    pipeline.setHref(RestUtil.getHref(uriInfo, COLLECTION_PATH, pipeline.getId()));
-    Entity.withHref(uriInfo, pipeline.getOwner());
-    Entity.withHref(uriInfo, pipeline.getService());
-    Entity.withHref(uriInfo, pipeline.getFollowers());
-    return pipeline;
+  public Chart addHref(UriInfo uriInfo, Chart chart) {
+    chart.setHref(RestUtil.getHref(uriInfo, COLLECTION_PATH, chart.getId()));
+    Entity.withHref(uriInfo, chart.getOwner());
+    Entity.withHref(uriInfo, chart.getService());
+    Entity.withHref(uriInfo, chart.getFollowers());
+    return chart;
   }
 
-  public PipelineResource(CollectionDAO dao, Authorizer authorizer) {
-    super(Pipeline.class, new PipelineRepository(dao), authorizer);
+  public ChartResource(CollectionDAO dao, Authorizer authorizer) {
+    super(Chart.class, new ChartRepository(dao), authorizer);
   }
 
-  public static class PipelineList extends ResultList<Pipeline> {
+  public static class ChartList extends ResultList<Chart> {
     @SuppressWarnings("unused")
-    PipelineList() {
+    ChartList() {
       // Empty constructor needed for deserialization
     }
 
-    public PipelineList(List<Pipeline> data, String beforeCursor, String afterCursor, int total) {
+    public ChartList(List<Chart> data, String beforeCursor, String afterCursor, int total) {
       super(data, beforeCursor, afterCursor, total);
     }
   }
 
-  static final String FIELDS = "owner,tasks,pipelineStatus,followers,tags";
+  static final String FIELDS = "owner,followers,tags";
 
   @Timed
   @ResponseMetered
   @ExceptionMetered
   @GET
-  @Valid
   @Operation(
-      summary = "List Pipelines",
-      tags = "pipelines",
+      summary = "List charts",
+      tags = "charts",
       description =
-          "Get a list of pipelines, optionally filtered by `service` it belongs to. Use `fields` "
+          "Get a list of charts, optionally filtered by `service` it belongs to. Use `fields` "
               + "parameter to get only necessary fields. Use cursor-based pagination to limit the number "
               + "entries in the list using `limit` and `before` or `after` query params.",
       responses = {
         @ApiResponse(
             responseCode = "200",
-            description = "List of pipelines",
-            content = @Content(mediaType = "application/json", schema = @Schema(implementation = PipelineList.class)))
+            description = "List of charts",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = ChartList.class)))
       })
-  public ResultList<Pipeline> list(
+  public ResultList<Chart> list(
       @Context UriInfo uriInfo,
       @Context SecurityContext securityContext,
       @Parameter(
@@ -128,21 +128,19 @@ public class PipelineResource extends EntityResource<Pipeline, PipelineRepositor
               schema = @Schema(type = "string", example = FIELDS))
           @QueryParam("fields")
           String fieldsParam,
-      @Parameter(
-              description = "Filter pipelines by service name",
-              schema = @Schema(type = "string", example = "airflow"))
+      @Parameter(description = "Filter charts by service name", schema = @Schema(type = "string", example = "superset"))
           @QueryParam("service")
           String serviceParam,
-      @Parameter(description = "Limit the number pipelines returned. (1 to 1000000, " + "default = 10)")
+      @Parameter(description = "Limit the number charts returned. (1 to 1000000, default = 10)")
           @DefaultValue("10")
+          @QueryParam("limit")
           @Min(0)
           @Max(1000000)
-          @QueryParam("limit")
           int limitParam,
-      @Parameter(description = "Returns list of pipelines before this cursor", schema = @Schema(type = "string"))
+      @Parameter(description = "Returns list of charts before this cursor", schema = @Schema(type = "string"))
           @QueryParam("before")
           String before,
-      @Parameter(description = "Returns list of pipelines after this cursor", schema = @Schema(type = "string"))
+      @Parameter(description = "Returns list of charts after this cursor", schema = @Schema(type = "string"))
           @QueryParam("after")
           String after,
       @Parameter(
@@ -162,19 +160,19 @@ public class PipelineResource extends EntityResource<Pipeline, PipelineRepositor
   @GET
   @Path("/{id}/versions")
   @Operation(
-      summary = "List pipeline versions",
-      tags = "pipelines",
-      description = "Get a list of all the versions of a pipeline identified by `id`",
+      summary = "List chart versions",
+      tags = "charts",
+      description = "Get a list of all the versions of a chart identified by `id`",
       responses = {
         @ApiResponse(
             responseCode = "200",
-            description = "List of pipeline versions",
+            description = "List of chart versions",
             content = @Content(mediaType = "application/json", schema = @Schema(implementation = EntityHistory.class)))
       })
   public EntityHistory listVersions(
       @Context UriInfo uriInfo,
       @Context SecurityContext securityContext,
-      @Parameter(description = "pipeline Id", schema = @Schema(type = "string")) @PathParam("id") String id)
+      @Parameter(description = "Chart Id", schema = @Schema(type = "string")) @PathParam("id") String id)
       throws IOException {
     return dao.listVersions(id);
   }
@@ -185,17 +183,17 @@ public class PipelineResource extends EntityResource<Pipeline, PipelineRepositor
   @GET
   @Path("/{id}")
   @Operation(
-      summary = "Get a pipeline",
-      tags = "pipelines",
-      description = "Get a pipeline by `id`.",
+      summary = "Get a Chart",
+      tags = "charts",
+      description = "Get a chart by `id`.",
       responses = {
         @ApiResponse(
             responseCode = "200",
-            description = "The pipeline",
-            content = @Content(mediaType = "application/json", schema = @Schema(implementation = Pipeline.class))),
-        @ApiResponse(responseCode = "404", description = "Pipeline for instance {id} is not found")
+            description = "The chart",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = Chart.class))),
+        @ApiResponse(responseCode = "404", description = "Chart for instance {id} is not found")
       })
-  public Pipeline get(
+  public Chart get(
       @Context UriInfo uriInfo,
       @Context SecurityContext securityContext,
       @PathParam("id") String id,
@@ -220,17 +218,17 @@ public class PipelineResource extends EntityResource<Pipeline, PipelineRepositor
   @GET
   @Path("/name/{fqn}")
   @Operation(
-      summary = "Get a pipeline by name",
-      tags = "pipelines",
-      description = "Get a pipeline by fully qualified name.",
+      summary = "Get a chart by name",
+      tags = "charts",
+      description = "Get a chart by fully qualified name.",
       responses = {
         @ApiResponse(
             responseCode = "200",
-            description = "The pipeline",
-            content = @Content(mediaType = "application/json", schema = @Schema(implementation = Pipeline.class))),
-        @ApiResponse(responseCode = "404", description = "Pipeline for instance {id} is not found")
+            description = "The chart",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = Chart.class))),
+        @ApiResponse(responseCode = "404", description = "Chart for instance {id} is not found")
       })
-  public Pipeline getByName(
+  public Chart getByName(
       @Context UriInfo uriInfo,
       @PathParam("fqn") String fqn,
       @Context SecurityContext securityContext,
@@ -255,24 +253,24 @@ public class PipelineResource extends EntityResource<Pipeline, PipelineRepositor
   @GET
   @Path("/{id}/versions/{version}")
   @Operation(
-      summary = "Get a version of the pipeline",
-      tags = "pipelines",
-      description = "Get a version of the pipeline by given `id`",
+      summary = "Get a version of the chart",
+      tags = "charts",
+      description = "Get a version of the chart by given `id`",
       responses = {
         @ApiResponse(
             responseCode = "200",
-            description = "pipeline",
-            content = @Content(mediaType = "application/json", schema = @Schema(implementation = Pipeline.class))),
+            description = "chart",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = Chart.class))),
         @ApiResponse(
             responseCode = "404",
-            description = "Pipeline for instance {id} and version {version} is " + "not found")
+            description = "Chart for instance {id} and version {version} is " + "not found")
       })
-  public Pipeline getVersion(
+  public Chart getVersion(
       @Context UriInfo uriInfo,
       @Context SecurityContext securityContext,
-      @Parameter(description = "Pipeline Id", schema = @Schema(type = "string")) @PathParam("id") String id,
+      @Parameter(description = "Chart Id", schema = @Schema(type = "string")) @PathParam("id") String id,
       @Parameter(
-              description = "Pipeline version number in the form `major`.`minor`",
+              description = "Chart version number in the form `major`.`minor`",
               schema = @Schema(type = "string", example = "0.1 or 1.1"))
           @PathParam("version")
           String version)
@@ -285,22 +283,20 @@ public class PipelineResource extends EntityResource<Pipeline, PipelineRepositor
   @ExceptionMetered
   @POST
   @Operation(
-      summary = "Create a pipeline",
-      tags = "pipelines",
-      description = "Create a new pipeline.",
+      summary = "Create a chart",
+      tags = "charts",
+      description = "Create a chart under an existing `service`.",
       responses = {
         @ApiResponse(
             responseCode = "200",
-            description = "The pipeline",
-            content =
-                @Content(mediaType = "application/json", schema = @Schema(implementation = CreatePipeline.class))),
+            description = "The chart",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = CreateChart.class))),
         @ApiResponse(responseCode = "400", description = "Bad request")
       })
-  public Response create(
-      @Context UriInfo uriInfo, @Context SecurityContext securityContext, @Valid CreatePipeline create)
+  public Response create(@Context UriInfo uriInfo, @Context SecurityContext securityContext, @Valid CreateChart create)
       throws IOException {
-    Pipeline pipeline = getPipeline(securityContext, create);
-    return create(uriInfo, securityContext, pipeline, ADMIN | BOT);
+    Chart chart = getChart(securityContext, create);
+    return create(uriInfo, securityContext, chart, ADMIN | BOT);
   }
 
   @Timed
@@ -309,12 +305,12 @@ public class PipelineResource extends EntityResource<Pipeline, PipelineRepositor
   @PATCH
   @Path("/{id}")
   @Operation(
-      summary = "Update a Pipeline",
-      tags = "pipelines",
-      description = "Update an existing pipeline using JsonPatch.",
+      summary = "Update a chart",
+      tags = "charts",
+      description = "Update an existing chart using JsonPatch.",
       externalDocs = @ExternalDocumentation(description = "JsonPatch RFC", url = "https://tools.ietf.org/html/rfc6902"))
   @Consumes(MediaType.APPLICATION_JSON_PATCH_JSON)
-  public Response updateDescription(
+  public Response patch(
       @Context UriInfo uriInfo,
       @Context SecurityContext securityContext,
       @PathParam("id") String id,
@@ -336,49 +332,20 @@ public class PipelineResource extends EntityResource<Pipeline, PipelineRepositor
   @ExceptionMetered
   @PUT
   @Operation(
-      summary = "Create or update a pipeline",
-      tags = "pipelines",
-      description = "Create a new pipeline, if it does not exist or update an existing pipeline.",
+      summary = "Create or update chart",
+      tags = "charts",
+      description = "Create a chart, it it does not exist or update an existing chart.",
       responses = {
         @ApiResponse(
             responseCode = "200",
-            description = "The pipeline",
-            content =
-                @Content(mediaType = "application/json", schema = @Schema(implementation = CreatePipeline.class))),
-        @ApiResponse(responseCode = "400", description = "Bad request")
+            description = "The updated chart ",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = CreateChart.class)))
       })
   public Response createOrUpdate(
-      @Context UriInfo uriInfo, @Context SecurityContext securityContext, @Valid CreatePipeline create)
+      @Context UriInfo uriInfo, @Context SecurityContext securityContext, @Valid CreateChart create)
       throws IOException {
-    Pipeline pipeline = getPipeline(securityContext, create);
-    return createOrUpdate(uriInfo, securityContext, pipeline, ADMIN | BOT | OWNER);
-  }
-
-  @Timed
-  @ResponseMetered
-  @ExceptionMetered
-  @PUT
-  @Path("/{id}/status")
-  @Operation(
-      summary = "Add status data",
-      tags = "pipelines",
-      description = "Add status data to the pipeline.",
-      responses = {
-        @ApiResponse(
-            responseCode = "200",
-            description = "The pipeline with a the new status",
-            content = @Content(mediaType = "application/json", schema = @Schema(implementation = Pipeline.class))),
-        @ApiResponse(responseCode = "400", description = "Bad request")
-      })
-  public Pipeline addPipelineStatus(
-      @Context UriInfo uriInfo,
-      @Context SecurityContext securityContext,
-      @Parameter(description = "Id of the pipeline", schema = @Schema(type = "string")) @PathParam("id") String id,
-      @Valid PipelineStatus pipelineStatus)
-      throws IOException {
-    SecurityUtil.authorizeAdmin(authorizer, securityContext, ADMIN | BOT);
-    Pipeline pipeline = dao.addPipelineStatus(UUID.fromString(id), pipelineStatus);
-    return addHref(uriInfo, pipeline);
+    Chart chart = getChart(securityContext, create);
+    return createOrUpdate(uriInfo, securityContext, chart, ADMIN | BOT | OWNER);
   }
 
   @Timed
@@ -388,16 +355,16 @@ public class PipelineResource extends EntityResource<Pipeline, PipelineRepositor
   @Path("/{id}/followers")
   @Operation(
       summary = "Add a follower",
-      tags = "pipelines",
-      description = "Add a user identified by `userId` as follower of this pipeline",
+      tags = "charts",
+      description = "Add a user identified by `userId` as followed of this chart",
       responses = {
         @ApiResponse(responseCode = "200", description = "OK"),
-        @ApiResponse(responseCode = "404", description = "Pipeline for instance {id} is not found")
+        @ApiResponse(responseCode = "404", description = "Chart for instance {id} is not found")
       })
   public Response addFollower(
       @Context UriInfo uriInfo,
       @Context SecurityContext securityContext,
-      @Parameter(description = "Id of the pipeline", schema = @Schema(type = "string")) @PathParam("id") String id,
+      @Parameter(description = "Id of the chart", schema = @Schema(type = "string")) @PathParam("id") String id,
       @Parameter(description = "Id of the user to be added as follower", schema = @Schema(type = "string"))
           String userId)
       throws IOException {
@@ -412,12 +379,12 @@ public class PipelineResource extends EntityResource<Pipeline, PipelineRepositor
   @Path("/{id}/followers/{userId}")
   @Operation(
       summary = "Remove a follower",
-      tags = "pipelines",
-      description = "Remove the user identified `userId` as a follower of the pipeline.")
+      tags = "charts",
+      description = "Remove the user identified `userId` as a follower of the chart.")
   public Response deleteFollower(
       @Context UriInfo uriInfo,
       @Context SecurityContext securityContext,
-      @Parameter(description = "Id of the pipeline", schema = @Schema(type = "string")) @PathParam("id") String id,
+      @Parameter(description = "Id of the chart", schema = @Schema(type = "string")) @PathParam("id") String id,
       @Parameter(description = "Id of the user being removed as follower", schema = @Schema(type = "string"))
           @PathParam("userId")
           String userId)
@@ -433,12 +400,12 @@ public class PipelineResource extends EntityResource<Pipeline, PipelineRepositor
   @DELETE
   @Path("/{id}")
   @Operation(
-      summary = "Delete a Pipeline",
-      tags = "pipelines",
-      description = "Delete a pipeline by `id`.",
+      summary = "Delete a Chart",
+      tags = "charts",
+      description = "Delete a chart by `id`.",
       responses = {
         @ApiResponse(responseCode = "200", description = "OK"),
-        @ApiResponse(responseCode = "404", description = "Pipeline for instance {id} is not found")
+        @ApiResponse(responseCode = "404", description = "Chart for instance {id} is not found")
       })
   public Response delete(
       @Context UriInfo uriInfo,
@@ -452,19 +419,17 @@ public class PipelineResource extends EntityResource<Pipeline, PipelineRepositor
     return delete(uriInfo, securityContext, id, false, hardDelete, ADMIN | BOT);
   }
 
-  private Pipeline getPipeline(SecurityContext securityContext, CreatePipeline create) {
-    return new Pipeline()
+  private Chart getChart(SecurityContext securityContext, CreateChart create) {
+    return new Chart()
         .withId(UUID.randomUUID())
         .withName(create.getName())
         .withDisplayName(create.getDisplayName())
         .withDescription(create.getDescription())
         .withService(create.getService())
-        .withTasks(create.getTasks())
-        .withPipelineUrl(create.getPipelineUrl())
+        .withChartType(create.getChartType())
+        .withChartUrl(create.getChartUrl())
+        .withTables(create.getTables())
         .withTags(create.getTags())
-        .withConcurrency(create.getConcurrency())
-        .withStartDate(create.getStartDate())
-        .withPipelineLocation(create.getPipelineLocation())
         .withOwner(create.getOwner())
         .withUpdatedBy(securityContext.getUserPrincipal().getName())
         .withUpdatedAt(System.currentTimeMillis());

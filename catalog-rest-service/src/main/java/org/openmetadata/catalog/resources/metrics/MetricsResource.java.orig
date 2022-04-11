@@ -11,14 +11,17 @@
  *  limitations under the License.
  */
 
-package org.openmetadata.catalog.resources.reports;
+package org.openmetadata.catalog.resources.metrics;
 
+<<<<<<< HEAD
 import static org.openmetadata.catalog.security.SecurityUtil.ADMIN;
 import static org.openmetadata.catalog.security.SecurityUtil.BOT;
 
+=======
 import com.codahale.metrics.annotation.ExceptionMetered;
 import com.codahale.metrics.annotation.ResponseMetered;
 import com.codahale.metrics.annotation.Timed;
+>>>>>>> 9d1c8c168 (Fix #1607 Operational metrics for OpenMetadata system observability)
 import io.swagger.annotations.Api;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -29,6 +32,8 @@ import java.io.IOException;
 import java.util.List;
 import java.util.UUID;
 import javax.validation.Valid;
+import javax.validation.constraints.Max;
+import javax.validation.constraints.Min;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
@@ -43,36 +48,35 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.SecurityContext;
 import javax.ws.rs.core.UriInfo;
-import org.openmetadata.catalog.entity.data.Report;
+import org.openmetadata.catalog.entity.data.Metrics;
 import org.openmetadata.catalog.jdbi3.CollectionDAO;
 import org.openmetadata.catalog.jdbi3.ListFilter;
-import org.openmetadata.catalog.jdbi3.ReportRepository;
+import org.openmetadata.catalog.jdbi3.MetricsRepository;
 import org.openmetadata.catalog.resources.Collection;
 import org.openmetadata.catalog.resources.EntityResource;
 import org.openmetadata.catalog.security.Authorizer;
 import org.openmetadata.catalog.type.Include;
-import org.openmetadata.catalog.util.EntityUtil.Fields;
 import org.openmetadata.catalog.util.ResultList;
 
-@Path("/v1/reports")
-@Api(value = "Reports collection", tags = "Reports collection")
+@Path("/v1/metrics")
+@Api(value = "Metrics collection", tags = "Metrics collection")
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
-@Collection(name = "reports")
-public class ReportResource extends EntityResource<Report, ReportRepository> {
-  public static final String COLLECTION_PATH = "/v1/bots/";
+@Collection(name = "metrics")
+public class MetricsResource extends EntityResource<Metrics, MetricsRepository> {
+  public static final String COLLECTION_PATH = "/v1/metrics/";
 
-  public ReportResource(CollectionDAO dao, Authorizer authorizer) {
-    super(Report.class, new ReportRepository(dao), authorizer);
+  public MetricsResource(CollectionDAO dao, Authorizer authorizer) {
+    super(Metrics.class, new MetricsRepository(dao), authorizer);
   }
 
   @Override
-  public Report addHref(UriInfo uriInfo, Report entity) {
+  public Metrics addHref(UriInfo uriInfo, Metrics entity) {
     return entity;
   }
 
-  public static class ReportList extends ResultList<Report> {
-    public ReportList(List<Report> data) {
+  public static class MetricsList extends ResultList<Metrics> {
+    public MetricsList(List<Metrics> data) {
       super(data);
     }
   }
@@ -84,26 +88,33 @@ public class ReportResource extends EntityResource<Report, ReportRepository> {
   @ExceptionMetered
   @GET
   @Operation(
-      summary = "List reports",
-      tags = "reports",
-      description = "Get a list of reports. Use `fields` parameter to get only necessary fields.",
+      summary = "List metrics",
+      tags = "metrics",
+      description = "Get a list of metrics. Use `fields` parameter to get only necessary fields.",
       responses = {
         @ApiResponse(
             responseCode = "200",
-            description = "List of reports",
-            content = @Content(mediaType = "application/json", schema = @Schema(implementation = ReportList.class)))
+            description = "List of metrics",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = MetricsList.class)))
       })
-  public ResultList<Report> list(
+  public ResultList<Metrics> list(
       @Context UriInfo uriInfo,
+      @Context SecurityContext securityContext,
       @Parameter(
               description = "Fields requested in the returned resource",
               schema = @Schema(type = "string", example = FIELDS))
           @QueryParam("fields")
-          String fieldsParam)
+          String fieldsParam,
+      @DefaultValue("10") @Min(0) @Max(1000000) @QueryParam("limit") int limitParam,
+      @Parameter(description = "Returns list of metrics before this cursor", schema = @Schema(type = "string"))
+          @QueryParam("before")
+          String before,
+      @Parameter(description = "Returns list of metrics after this cursor", schema = @Schema(type = "string"))
+          @QueryParam("after")
+          String after)
       throws IOException {
-    Fields fields = getFields(fieldsParam);
     ListFilter filter = new ListFilter();
-    return dao.listAfter(uriInfo, fields, filter, 10000, null);
+    return super.listInternal(uriInfo, securityContext, fieldsParam, filter, limitParam, before, after);
   }
 
   @Timed
@@ -112,17 +123,17 @@ public class ReportResource extends EntityResource<Report, ReportRepository> {
   @GET
   @Path("/{id}")
   @Operation(
-      summary = "Get a report",
-      tags = "reports",
-      description = "Get a report by `id`.",
+      summary = "Get a metric",
+      tags = "metrics",
+      description = "Get a metric by `id`.",
       responses = {
         @ApiResponse(
             responseCode = "200",
-            description = "The report",
-            content = @Content(mediaType = "application/json", schema = @Schema(implementation = Report.class))),
-        @ApiResponse(responseCode = "404", description = "Report for instance {id} is not found")
+            description = "The metrics",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = Metrics.class))),
+        @ApiResponse(responseCode = "404", description = "Metrics for instance {id} is not found")
       })
-  public Report get(
+  public Metrics get(
       @Context UriInfo uriInfo,
       @Context SecurityContext securityContext,
       @PathParam("id") String id,
@@ -146,20 +157,20 @@ public class ReportResource extends EntityResource<Report, ReportRepository> {
   @ExceptionMetered
   @POST
   @Operation(
-      summary = "Create a report",
-      tags = "reports",
-      description = "Create a new report.",
+      summary = "Create a metric",
+      tags = "metrics",
+      description = "Create a new metric.",
       responses = {
         @ApiResponse(
             responseCode = "200",
-            description = "The report",
-            content = @Content(mediaType = "application/json", schema = @Schema(implementation = Report.class))),
+            description = "The metric",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = Metrics.class))),
         @ApiResponse(responseCode = "400", description = "Bad request")
       })
-  public Response create(@Context UriInfo uriInfo, @Context SecurityContext securityContext, @Valid Report report)
+  public Response create(@Context UriInfo uriInfo, @Context SecurityContext securityContext, @Valid Metrics metrics)
       throws IOException {
-    addToReport(securityContext, report);
-    return create(uriInfo, securityContext, report, ADMIN | BOT);
+    addToMetrics(securityContext, metrics);
+    return create(uriInfo, securityContext, metrics, ADMIN | BOT);
   }
 
   @Timed
@@ -167,24 +178,24 @@ public class ReportResource extends EntityResource<Report, ReportRepository> {
   @ExceptionMetered
   @PUT
   @Operation(
-      summary = "Create or update a report",
-      tags = "reports",
-      description = "Create a new report, it it does not exist or update an existing report.",
+      summary = "Create or update a metric",
+      tags = "metrics",
+      description = "Create a new metric, if it does not exist or update an existing metric.",
       responses = {
         @ApiResponse(
             responseCode = "200",
-            description = "The report",
-            content = @Content(mediaType = "application/json", schema = @Schema(implementation = Report.class))),
+            description = "The metric",
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = Metrics.class))),
         @ApiResponse(responseCode = "400", description = "Bad request")
       })
   public Response createOrUpdate(
-      @Context UriInfo uriInfo, @Context SecurityContext securityContext, @Valid Report report) throws IOException {
-    addToReport(securityContext, report);
-    return createOrUpdate(uriInfo, securityContext, report);
+      @Context UriInfo uriInfo, @Context SecurityContext securityContext, @Valid Metrics metrics) throws IOException {
+    addToMetrics(securityContext, metrics);
+    return createOrUpdate(uriInfo, securityContext, metrics);
   }
 
-  private void addToReport(SecurityContext securityContext, Report report) {
-    report
+  private void addToMetrics(SecurityContext securityContext, Metrics metrics) {
+    metrics
         .withId(UUID.randomUUID())
         .withUpdatedBy(securityContext.getUserPrincipal().getName())
         .withUpdatedAt(System.currentTimeMillis());

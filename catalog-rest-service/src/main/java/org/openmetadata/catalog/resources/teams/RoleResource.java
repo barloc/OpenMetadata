@@ -15,6 +15,7 @@ package org.openmetadata.catalog.resources.teams;
 
 import static org.openmetadata.catalog.security.SecurityUtil.ADMIN;
 import static org.openmetadata.catalog.security.SecurityUtil.BOT;
+
 import com.codahale.metrics.annotation.ExceptionMetered;
 import com.codahale.metrics.annotation.ResponseMetered;
 import com.codahale.metrics.annotation.Timed;
@@ -360,7 +361,6 @@ public class RoleResource extends EntityResource<Role, RoleRepository> {
                       }))
           JsonPatch patch)
       throws IOException {
-    SecurityUtil.checkAdminOrBotRole(authorizer, securityContext);
     return patchInternal(uriInfo, securityContext, id, patch);
   }
 

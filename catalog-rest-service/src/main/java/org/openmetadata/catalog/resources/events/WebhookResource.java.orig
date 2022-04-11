@@ -13,12 +13,15 @@
 
 package org.openmetadata.catalog.resources.events;
 
+<<<<<<< HEAD
 import static org.openmetadata.catalog.security.SecurityUtil.ADMIN;
 import static org.openmetadata.catalog.security.SecurityUtil.BOT;
 
+=======
 import com.codahale.metrics.annotation.ExceptionMetered;
 import com.codahale.metrics.annotation.ResponseMetered;
 import com.codahale.metrics.annotation.Timed;
+>>>>>>> 9d1c8c168 (Fix #1607 Operational metrics for OpenMetadata system observability)
 import io.swagger.annotations.Api;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
